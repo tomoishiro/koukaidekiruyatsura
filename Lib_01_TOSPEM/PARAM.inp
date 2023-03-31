@@ -1,0 +1,17 @@
+
+&mine
+ni = 0,    !node of |i>.
+li = 3,    !l of |i>.
+ji = 7,    !2*j of |i>, must be ODD.
+  nf = 0,    !node of <f|.
+  lf = 3,    !l of <f|.
+  jf = 5,    !2*j of <f|, must be ODD.
+     nem  = 9,   !"=8" means electric, and "=9" means magnetic.
+     ilam = 1,   !multi-polarity. E.g. (nem=9,ilam=2) means M2.
+/
+
+&gfactors
+gl_p =  1.d0, gs_p =  5.586d0, gl_n =  0.d0, gs_n = -3.826d0,
+/
+
+!gl_p =  1.d0, gs_p =  0.d0, gl_n =  0.d0, gs_n = 1.d0,
