@@ -1,7 +1,6 @@
 set tmargin 0.3
 set rmargin 0.3
 
-
 set ylabel "R_{max}  [fm]"
 set xlabel "E_{SP}  [MeV]"
 
