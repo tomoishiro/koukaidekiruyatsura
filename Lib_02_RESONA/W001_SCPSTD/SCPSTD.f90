@@ -10,7 +10,6 @@ module mdl_001_setting
    double precision, parameter :: dr = 0.1d0
    integer, parameter :: nrmax = int(rmax/dr+1.d-6) !max # of r-grid
 
-
 !--- Define constants frequently used
    complex (kind=kind(0d0)), parameter :: ai = (0.d0, 1.d0)
    double precision, parameter :: hbarc = 197.329d0
@@ -44,12 +43,10 @@ module mdl_001_setting
 end module mdl_001_setting
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-module mdl_002_routines!mod_01
+module mdl_002_routines
 contains
 !**************************************************************
-   subroutine deriv_2nd_5p(f, ddf, dr, nr)
-! The second derivative of F (5 point formula). See Abramowicz, p. 914.
-!**************************************************************
+   subroutine deriv_2nd_5p(f, ddf, dr, nr)! The second derivative of F (5 point formula). See Abramowicz, p. 914.
       implicit none
       integer, intent(in) :: nr
       double precision, intent(in) :: dr, f(nr)
@@ -66,9 +63,7 @@ contains
       return
    end subroutine deriv_2nd_5p
 !**************************************************************
-   subroutine deriv_5p(f, df, dr, nr)
-! The first derivative of f(x) (5 point formula). See Abramowicz, p.914.
-!**************************************************************
+   subroutine deriv_5p(f, df, dr, nr)!The first derivative of f(x) (5 point formula). See Abramowicz, p.914.
       implicit none
       integer, intent(in) :: nr
       double precision, intent(in) :: dr, f(nr)
@@ -190,10 +185,11 @@ contains
 !      pause '50 iterations should never happen'
       return
    end subroutine mdiag
+!**********************************************************
    subroutine eigsrt(d, v, n, np)
-      implicit double precision (a-h, o-z)
-      integer :: n, np
-      integer :: i, j, k
+      implicit none
+      integer :: n, np, i, j, k
+      double precision :: p
       double precision, dimension (np) :: d
       double precision, dimension (np, np) :: v
       do i = 1, n - 1
@@ -217,11 +213,8 @@ contains
       end do
       return
    end subroutine eigsrt
-
 !**********************************************************
-   function factlog(n) result (ff)
-! factlog(N)=log(N!)
-!**********************************************************
+   function factlog(n) result (ff)! factlog(N)=log(N!)
       implicit none
       integer, intent (in) :: n
       integer :: i
@@ -233,16 +226,12 @@ contains
       end do
 500   return
    end function factlog
-
 !***************************************************************
-   pure function skipfact(n) result (g)
-! N!! calculater by Oishi
-!***************************************************************
+   pure function skipfact(n) result (g)! N!! calculater by Oishi
       implicit none
       integer, intent (in) :: n
       integer :: i
       double precision :: g
-
       g = 1.d0
       if (n<0) go to 100
       if (n>1 .and. mod(n,2)==0) then
@@ -255,34 +244,26 @@ contains
          end do
       end if
       return
-
 100   g = 0.d0
       return
    end function skipfact
-
 !***************************************************************
-   function fact(n) result (g)
-! N! calculater by Oishi
-!***************************************************************
+   function fact(n) result (g)! N! calculater by Oishi
       implicit none
       integer, intent (in) :: n
       integer :: i
       double precision :: g
-
       g = 1.d0
       if (n<2) go to 100
       do i = 2, n
          g = g*dble(i)
       end do
       return
-
 100   if (n<0) g = 0.d0
       return
    end function fact
-
 !***************************************************************
    pure function f_npm(n, m) result (ff) != nPm
-!***************************************************************
       implicit none
       integer, intent (in) :: n, m
       integer :: i
@@ -295,11 +276,8 @@ contains
       end do
 500   return
    end function f_npm
-
 !****************************************************************
-   pure function dlt(i, j) result (ff)
-! Kronecker's delta_ij
-!****************************************************************
+   pure function dlt(i, j) result (ff)! Kronecker's delta_ij
       implicit none
       integer, intent (in) :: i, j
       double precision :: ff
@@ -307,7 +285,7 @@ contains
       if (i==j) ff = 1.d0
       return
    end function dlt
-
+!****************************************************************
 end module mdl_002_routines
 !///////////////////////////////////////////////////////////////////////////////
 
@@ -1886,9 +1864,7 @@ contains
       double precision, intent (out) :: eall(nspmax), veigs(nspmax, nspmax)
       double precision, dimension (:), allocatable :: d
       double precision, dimension (:, :), allocatable :: v, h0
-
       allocate (d(n), v(n,n), h0(n,n))
-
       do i = 1, n
          d(i) = 0.d0
          do j = 1, n
@@ -1896,9 +1872,7 @@ contains
             h0(j, i) = h(j, i)
          end do
       end do
-
       call mdiag(h0, d, v, n, n)
-
       do i = 1, n
          eall(i) = d(i)
          do j = 1, n
@@ -1911,14 +1885,12 @@ contains
 
 !**************************************************************
    subroutine hsp_cnf(xind,nsp, ll, jj, esp, psi, hsp3)
-!**************************************************************
       use mdl_001_setting
       implicit none
       character(4), intent(INOUT) :: xind
       integer, intent (in) :: nsp, ll(nspmax), jj(nspmax)
       double precision, intent (in) :: esp(nspmax), psi(nspmax, nrmax)
       double precision, intent (out) :: hsp3(nspmax, nspmax)
-
       integer :: ir, i1, i2, l1, l2, j1, j2
       double precision :: r, dw, sum, e1, e2
 
@@ -1957,9 +1929,7 @@ contains
 
 !**************************************************************
    subroutine sort(nsp0, ll0, jj0, node0, esp0, psi0)
-! A routine to sort the eigenvalues obtained in "spbsis" and
-! the associated eigen functions.
-!**************************************************************
+! A routine to sort the eigenvalues obtained in "spbsis" and the associated eigen functions.
       use mdl_001_setting
       implicit none
       integer, intent (inout) :: nsp0, ll0(nspmax), jj0(nspmax), node0(nspmax)
@@ -2004,12 +1974,8 @@ contains
       return
    end subroutine sort
 
-
-
 !*****************************************************************
-   subroutine spbss(xind,nsp0, ll0, jj0, node0, esp0, psi0, lin, jin)
-! single-particle wave functions
-!*****************************************************************
+   subroutine spbss(xind,nsp0, ll0, jj0, node0, esp0, psi0, lin, jin)! single-particle wave functions
       use mdl_001_setting
       implicit none
 
@@ -2098,7 +2064,6 @@ contains
 !**********************************************************************
    subroutine numerov1(xind,inode, l, j, e, psi00)
 ! Subroutine for integration of the Schroedinger eq. by Numerov method
-!**********************************************************************
       use mdl_001_setting, only : rmax,nrmax,dr,ecut,hbarc,xmu,tol,lmax,ndmax,ac
       implicit none
       character(4), intent (INOUT) :: xind
@@ -2148,9 +2113,7 @@ contains
 
 !**************************************************************
    subroutine numerov2(xind,l, j, e, psi00)
-! Solve the Schroedinger eq. backward in order to ensure the
-! asymptotic form for E < 0.
-!*************************************************************
+! Solve the Schroedinger eq. backward in order to ensure the asymptotic form for E < 0.
       use mdl_001_setting, only : rmax,nrmax,dr,ecut,hbarc,xmu,tol,lmax,ndmax,ac
 !<>      use functions, only : vcx
       implicit none
@@ -2303,9 +2266,7 @@ contains
    end subroutine spbss_cnf
 
 !**********************************************************************
-   subroutine numerov1_cnf(xind,inode, l, j, e, psi00)
-! Subroutine for integration of the Schroedinger eq. by Numerov method
-!**********************************************************************
+   subroutine numerov1_cnf(xind,inode, l, j, e, psi00)! Subroutine for integration of the Schroedinger eq. by Numerov method
       use mdl_001_setting
       implicit none
       character(4), intent(INOUT) :: xind
@@ -2484,9 +2445,7 @@ end module mdl_003_subroutines
    write (8, *) 'number of s.p.basis=', nsp1
    write (8, *) ''
 
-
-
-
+!--- Time-dependent calculation starts.
    IF_TEMPO = 1
    IF(IF_TEMPO.eq.0) go to 87314
 
@@ -2646,10 +2605,6 @@ end module mdl_003_subroutines
 
 
 
-
-
-
-
 !***********************************************************
    subroutine  CN_SC(sind)
    use mdl_002_routines
@@ -2777,8 +2732,6 @@ end module mdl_003_subroutines
    write (6, *) '' ; write (8, *) ''
    end subroutine rectime
 
-
-
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ CN-MAIN
 program MAIN_clock
    implicit none
@@ -2794,7 +2747,7 @@ program MAIN_clock
    write(6,*) "************* PROTON *****************************"
    write(6,*) "**************************************************"
       call CN_SC('prot')
-                          l = 4 ; jj = 9!---------------------------------filter
+                    l = 9999 ; jj = -9999!---------------------------------filter
       call CN_TD('prot',l,jj)
    end if
    !----------------------------
@@ -2803,11 +2756,10 @@ program MAIN_clock
    write(6,*) "************* NEUTRON ****************************"
    write(6,*) "**************************************************"
       call CN_SC('neut')
-                         l = 2 ; jj = 3!---------------------------------filter
+                   l = 2 ; jj = 3!---------------------------------filter
       call CN_TD('neut',l,jj)
    end if
    !----------------------------
-
 
    call system_clock(it2, it_rate, it_max)
    if ( it2 < it1 ) then
@@ -2823,5 +2775,4 @@ program MAIN_clock
    write(8, *) "cpu time    :", c2-c1, "seconds."
    close(8)
 end program MAIN_clock
-
 
