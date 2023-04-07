@@ -116,15 +116,12 @@ contains
    end function WSD
 end module mdl_002_potentials
 !///////////////////////////////////////////////////////////////////////////////
-
-
 !///////////////////////////////////////////////////////////////////////////////
 module mdl_007_solvers
    implicit none
    integer, parameter :: noc_p = 0 !# of Proton- orbits occupied by the core.
    integer, parameter :: noc_n = 0 !# of Neutron-orbits occupied by the core.
-   !=  3 for O-16.
-   != 11 for Sn-100.
+                                   !=  3 for O-16. != 11 for Sn-100.
 contains
    !*****************************************************************
    subroutine spsts_np(nsp0, ll0, jj0, node0, esp0, psi0, xind) ! single-particle wave functions.
@@ -169,7 +166,7 @@ contains
             if (j<0) go to 101
 
             emax = ecut ; emin = -abs(vsp_ws_0(0,1,tol))
-            call numerov1(inode, l, j, ecut, psi00, xind) !determine nodemax from E_cut
+            call numerov_for(inode, l, j, ecut, psi00, xind) !determine nodemax from E_cut
             nodemax = inode - 1
 
             do 100 node00 = 0, nodemax
@@ -183,7 +180,7 @@ contains
 !--- iteration to approximate `E' by both-side-attack
                do k = 1, nxkmax
                   e = (emin + emax)*0.5d0
-                  call numerov1(inode,l,j,e,psi00,xind)
+                  call numerov_for(inode,l,j,e,psi00,xind)
                   if (inode>node00) then
                      emax = e
                   else
@@ -195,7 +192,7 @@ contains
                   write (6, *) 'Increase ``nspmax'' (~_~)' ; stop
                end if
 !--- matching at large distance for bound state
-               if((e-vsp_ws_0(l,j,rmaxd))<0.d0) call numerov2(l,j,e,psi00,xind)
+               if((e-vsp_ws_0(l,j,rmaxd))<0.d0) call numerov_mat(l,j,e,psi00,xind)
                esp0(m) = e ; ll0(m) = l ; jj0(m) = j ; node0(m) = node00
                do ir = 0, nrmax
                   psi0(m, ir) = psi00(ir)
@@ -210,7 +207,7 @@ contains
       return
    end subroutine spsts_np
 !**********************************************************************
-   subroutine numerov1(inode, l, j, e, psi00, xind)! Subroutine for integration of the Schroedinger eq. by Numerov method
+   subroutine numerov_for(inode, l, j, e, psi00, xind)! Subroutine for integration of the Schroedinger eq. by Numerov method
       use mdl_001_setting
       use mdl_002_potentials, only : v_cn, v_cp
       implicit none
@@ -220,10 +217,8 @@ contains
       double precision, intent (in) :: e
       double precision, intent (inout) :: psi00(0:nrmax)
       character(4), intent(in) :: xind
-
       integer :: ir
       double precision :: r, r0, r1, fac, psi0, psi1, dd, cc, cin, rmaxd
-
       psi00 = 0.d0
       rmaxd = rmax ; nrmaxd = nrmax
 !!      IF((xind.ne.'prot')) tHEN
@@ -274,23 +269,17 @@ contains
       psi00(0) = 0.d0
       psi00(1) = psi0
       psi00(2) = psi1
-
       do ir = 3, nrmaxd
          r = dr*dble(ir)
          r0 = dr*dble(ir-2)
          r1 = dr*dble(ir-1)
-
          dd = psi0 - 2.d0*psi1
          dd = dd - fac*(v_cp(l,j,r0)-e)*psi0/12.d0
          dd = dd - fac*(v_cp(l,j,r1)-e)*psi1*5.d0/6.d0
-
          cc = -fac*(v_cp(l,j,r)-e)/12.d0 + 1.d0
          cin = 1.d0/cc
-
          psi00(ir) = -cin*dd
-
          if (ir>5 .and. psi00(ir)*psi00(ir-1)<0.d0) inode = inode + 1
-
          psi0 = psi1
          psi1 = psi00(ir)
       end do
@@ -301,12 +290,11 @@ contains
          fac = fac + psi00(ir)*psi00(ir)*dr
       end do
       psi00 = psi00/sqrt(fac)
-
       return
-   end subroutine numerov1
+   end subroutine numerov_for
 
 !**************************************************************
-   subroutine numerov2(l, j, e, psi00, xind)! Solve the Schroedinger eq. backward in order to ensure the asymptotic form for E < 0.
+   subroutine numerov_mat(l, j, e, psi00, xind)! Solve the Schroedinger eq. backward in order to ensure the asymptotic form for E < 0.
       use mdl_001_setting, only : rmax,nrmax,dr,ecut,hbarc,xmu_cp,xmu_cn,tol,lmax,ndmax,ac
       use mdl_002_potentials
       implicit none
@@ -319,11 +307,6 @@ contains
       double precision :: evl, fac, ak, psi0, psi1, dd, cc, cin, cmatch, psid(0:nrmax)
 !!      psi00 = 0.d0
       rmaxd = rmax ; nrmaxd = nrmax
-!!      IF((xind.ne.'prot')) tHEN
-!!          rmaxd = rmax - 40.d0
-!!          nrmaxd = int(rmaxd/dr+tol)
-!!      END if
-
       rmatch = 1.5d0*ac**(1.d0/3.d0) !!0.5d0*rmaxd
       irmatch = int(rmatch/dr+tol)
 
@@ -344,20 +327,15 @@ contains
       psid(nrmaxd-1) = psi1
 
       do ir = nrmaxd - 2, irmatch, -1
-
          r = dr*dble(ir)
          r0 = dr*dble(ir+2)
          r1 = dr*dble(ir+1)
-
          dd = psi0 - 2.d0*psi1
          dd = dd - fac*(v_cn(l,j,r0)-e)*psi0/12.d0
          dd = dd - fac*(v_cn(l,j,r1)-e)*psi1*5.d0/6.d0
-
          cc = -fac*(v_cn(l,j,r)-e)/12.d0 + 1.d0
          cin = 1.d0/cc
-
          psid(ir) = -cin*dd
-
          psi0 = psi1
          psi1 = psid(ir)
       end do
@@ -379,20 +357,15 @@ contains
       psid(nrmaxd-1) = psi1
 
       do ir = nrmaxd - 2, irmatch, -1
-
          r = dr*dble(ir)
          r0 = dr*dble(ir+2)
          r1 = dr*dble(ir+1)
-
          dd = psi0 - 2.d0*psi1
          dd = dd - fac*(v_cp(l,j,r0)-e)*psi0/12.d0
          dd = dd - fac*(v_cp(l,j,r1)-e)*psi1*5.d0/6.d0
-
          cc = -fac*(v_cp(l,j,r)-e)/12.d0 + 1.d0
          cin = 1.d0/cc
-
          psid(ir) = -cin*dd
-
          psi0 = psi1
          psi1 = psid(ir)
       end do
@@ -409,7 +382,7 @@ contains
       end do
       psi00 = psi00/sqrt(fac)
       return
-   end subroutine numerov2
+   end subroutine numerov_mat
 
 !**************************************************************
    subroutine sort_np(nsp0, ll0, jj0, node0, esp0, psi0)! A routine to sort the eigenvalues obtained in "spbsis" and the associated eigen functions.
@@ -508,10 +481,8 @@ contains
       end if
    end subroutine spbasis_n
 
-
 end module mdl_007_solvers
 !///////////////////////////////////////////////////////////////////////////////
-
 !///////////////////////////////////////////////////////////////////////////////
 module mdl_008_elem
 contains
@@ -802,11 +773,8 @@ contains
    !--------------------------------------
 !****************************************************************
 
-
  end module mdl_008_elem
 !///////////////////////////////////////////////////////////////////////////////
-
-
 !///////////////////////////////////////////////////////////////////////////////
 module mdl_099_summary
    private :: rectime
@@ -1038,8 +1006,6 @@ contains
    write (711, 503) v/ff1
    write (711, 504) w/ff1
 
-
-   
    !--- result-2
    write (711, *) ""
    write (711, *) "<><<><><><><<><><><><<><><><><<><><><><<><><><><<><><><><<><><>"
