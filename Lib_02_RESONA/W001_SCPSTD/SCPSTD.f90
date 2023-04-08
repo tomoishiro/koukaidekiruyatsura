@@ -80,44 +80,40 @@ contains
       return
    end subroutine deriv_5p
 !*****************************************************************
-   subroutine mdiag(a, d, vv, n, np)
-! The Jacobi method to compute all eigenvalues and eigenvectors
-! of a real symmetric matrix A, which is of size N by N, stored
-! in a physical NP by NP array. On output, the elements of A
-! above the diagonal are destroyed. D returns the eigenvalues of
-! A in its first N elements. V is a matrix with the same logical
-! and physical dimensions as A whose columns contain, on output,
-! the normalized eigenvectors of A. NROT returns the number of
-! Jacobi rotations which were required.
-! N.B.: The I-th component of the eigenvector for the K-th
-!       eigenvalue is given by V(I,K).
-!*****************************************************************
-      implicit double precision (a-h, o-z)
-      integer :: n, np
-      integer :: ip, iq, nrot, i, j
-      double precision, dimension (np, np) :: a, vv
-      double precision, dimension (np) :: b, z, d
+   subroutine diajac(A, D, VV, np)
+      implicit none
+      integer, intent(IN) :: np
+      double precision, intent(INOUT) :: A(np, np), D(np), VV(np, np)
+      integer :: n, nrot, ip, iq, i, j
+      double precision :: c, gx, hx, s, sm, t, tau, theta, tresh
+      double precision, dimension (np) :: b, z
+! The Jacobi method to compute all eigenvalues and eigenvectors of a real symmetric matrix A.
+! On output, the elements of A above the diagonal line are destroyed.
+! The I-th component of the eigenvector for the K-th eigenvalue is given by VV(I,K).
+! D returns the eigenvalues of A in its first NP elements.
+! NROT returns the number of Givens-Jacobi rotations required.
+      n=np
       do ip = 1, n
          do iq = 1, n
-            vv(ip, iq) = 0.d0
+            VV(ip, iq) = 0.d0
          end do
-         vv(ip, ip) = 1.d0
+         VV(ip, ip) = 1.d0
       end do
       do ip = 1, n
-         b(ip) = a(ip, ip)
-         d(ip) = b(ip)
+         b(ip) = A(ip, ip)
+         D(ip) = b(ip)
          z(ip) = 0.d0
       end do
       nrot = 0
-      do i = 1, 50
+      do 1000 i = 1, 50
          sm = 0.d0
          do ip = 1, n - 1
             do iq = ip + 1, n
-               sm = sm + abs(a(ip,iq))
+               sm = sm + abs(A(ip,iq))
             end do
          end do
          if (sm==0.d0) then
-            call eigsrt(d, vv, n, np)
+            call eigsrt(D, VV, n)
             return
          end if
          if (i<4) then
@@ -125,73 +121,76 @@ contains
          else
             tresh = 0.d0
          end if
-         do ip = 1, n - 1
-            do iq = ip + 1, n
-               g = 100.d0*abs(a(ip,iq))
-               if ((i>4) .and. (abs(d(ip))+g==abs(d(ip))) .and. (abs(d(iq))+g==abs(d(iq)))) then
-                  a(ip, iq) = 0.d0
-               else if (abs(a(ip,iq))>tresh) then
-                  h = d(iq) - d(ip)
-                  if (abs(h)+g==abs(h)) then
-                     t = a(ip, iq)/h
+         do 286 ip = 1, n - 1
+            do 287 iq = ip + 1, n
+               gx = 100.d0*abs(A(ip,iq))
+               !-----------------------------------------------------------------------<UTA starts.>
+               if ((i>4) .and. (abs(D(ip))+gx==abs(D(ip))) .and. (abs(D(iq))+gx==abs(D(iq)))) then
+                  A(ip, iq) = 0.d0
+               else if (abs(A(ip,iq))>tresh) then
+                  hx = D(iq) - D(ip)
+                  if (abs(hx)+gx==abs(hx)) then
+                     t = A(ip, iq)/hx
                   else
-                     theta = 0.5d0*h/a(ip, iq)
+                     theta = 0.5d0*hx/A(ip, iq)
                      t = 1.d0/(abs(theta)+sqrt(1.d0+theta**2))
                      if (theta<0.d0) t = -t
                   end if
                   c = 1.d0/sqrt(1.d0+t**2)
                   s = t*c
                   tau = s/(1.d0+c)
-                  h = t*a(ip, iq)
-                  z(ip) = z(ip) - h
-                  z(iq) = z(iq) + h
-                  d(ip) = d(ip) - h
-                  d(iq) = d(iq) + h
-                  a(ip, iq) = 0.d0
+                  hx = t*A(ip, iq)
+                  z(ip) = z(ip) -hx
+                  z(iq) = z(iq) +hx
+                  D(ip) = D(ip) -hx
+                  D(iq) = D(iq) +hx
+                  A(ip, iq) = 0.d0
                   do j = 1, ip - 1
-                     g = a(j, ip)
-                     h = a(j, iq)
-                     a(j, ip) = g - s*(h+g*tau)
-                     a(j, iq) = h + s*(g-h*tau)
+                     gx = A(j, ip)
+                     hx = A(j, iq)
+                     A(j, ip) = gx -s*(hx +gx*tau)
+                     A(j, iq) = hx +s*(gx -hx*tau)
                   end do
                   do j = ip + 1, iq - 1
-                     g = a(ip, j)
-                     h = a(j, iq)
-                     a(ip, j) = g - s*(h+g*tau)
-                     a(j, iq) = h + s*(g-h*tau)
+                     gx = A(ip, j)
+                     hx = A(j, iq)
+                     A(ip, j) = gx - s*(hx +gx*tau)
+                     A(j, iq) = hx + s*(gx -hx*tau)
                   end do
                   do j = iq + 1, n
-                     g = a(ip, j)
-                     h = a(iq, j)
-                     a(ip, j) = g - s*(h+g*tau)
-                     a(iq, j) = h + s*(g-h*tau)
+                     gx = A(ip, j)
+                     hx = A(iq, j)
+                     A(ip, j) = gx - s*(hx +gx*tau)
+                     A(iq, j) = hx + s*(gx -hx*tau)
                   end do
                   do j = 1, n
-                     g = vv(j, ip)
-                     h = vv(j, iq)
-                     vv(j, ip) = g - s*(h+g*tau)
-                     vv(j, iq) = h + s*(g-h*tau)
+                     gx = VV(j, ip)
+                     hx = VV(j, iq)
+                     VV(j, ip) = gx - s*(hx +gx*tau)
+                     VV(j, iq) = hx + s*(gx -hx*tau)
                   end do
                   nrot = nrot + 1
                end if
-            end do
-         end do
+               !----------------------------------------------------------------<UTA ends.>
+     287    end do
+  286    end do
+         !---
          do ip = 1, n
             b(ip) = b(ip) + z(ip)
-            d(ip) = b(ip)
+            D(ip) = b(ip)
             z(ip) = 0.d0
          end do
-      end do
-!      pause '50 iterations should never happen'
+1000  end do
+!<>      pause '50 iterations should never happen'
       return
-   end subroutine mdiag
+   end subroutine diajac
 !**********************************************************
-   subroutine eigsrt(d, v, n, np)
+   subroutine eigsrt(d, v, n)
       implicit none
-      integer :: n, np, i, j, k
+      integer :: n, i, j, k
       double precision :: p
-      double precision, dimension (np) :: d
-      double precision, dimension (np, np) :: v
+      double precision, dimension (n) :: d
+      double precision, dimension (n, n) :: v
       do i = 1, n - 1
          k = i
          p = d(i)
@@ -1849,13 +1848,9 @@ contains
       zf = dble(2*l+1)*exp(2.d0*ai*sigmad(l))*(zs-1.d0)/2.d0/ai/ak
       return
    end subroutine coulscat
-
-
 !**************************************************************
-   subroutine hspdiag(n, h, eall, veigs)
-! Diagonalize the s.p.Hamiltonian matrix
-!**************************************************************
-      use mdl_002_routines
+   subroutine hspdiag(n, h, eall, veigs)! Diagonalize the s.p.Hamiltonian matrix
+      use mdl_002_routines, only : diajac
       use mdl_001_setting
       implicit none
       integer :: i, j
@@ -1872,7 +1867,7 @@ contains
             h0(j, i) = h(j, i)
          end do
       end do
-      call mdiag(h0, d, v, n, n)
+      call diajac(h0, d, v, n)
       do i = 1, n
          eall(i) = d(i)
          do j = 1, n
@@ -1882,7 +1877,6 @@ contains
       deallocate (d, v, h0)
       return
    end subroutine hspdiag
-
 !**************************************************************
    subroutine hsp_cnf(xind,nsp, ll, jj, esp, psi, hsp3)
       use mdl_001_setting

@@ -1,4 +1,4 @@
-
+#---GNUPLOT SCRIPT
 set rmargin 0.6
 set tmargin 0.6
 set size 0.8, 0.8
