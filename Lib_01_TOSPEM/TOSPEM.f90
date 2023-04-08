@@ -117,6 +117,8 @@ contains
 end module mdl_002_potentials
 !///////////////////////////////////////////////////////////////////////////////
 !///////////////////////////////////////////////////////////////////////////////
+!///////////////////////////////////////////////////////////////////////////////
+!///////////////////////////////////////////////////////////////////////////////
 module mdl_007_solvers
    implicit none
    integer, parameter :: noc_p = 0 !# of Proton- orbits occupied by the core.
@@ -140,7 +142,7 @@ contains
       IF((xind.ne.'prot') .and. (xind.ne.'neut')) THEN
         WRITE(6,*) "Check 'xind' in sp-states." ; STOP
       END IF
-!--- exclude core-sts.
+      !---core-states to be excluded(?).
       llc(0) =-1 ; jjc(0) =-1 ; nodec(0) =-1 !for free
       llc(1) = 0 ; jjc(1) = 1 ; nodec(1) = 0 !0s_1/2 (2)
       llc(2) = 1 ; jjc(2) = 3 ; nodec(2) = 0 !0p_3/2 (4)
@@ -155,7 +157,7 @@ contains
       llc(11)= 4 ; jjc(11)= 9 ; nodec(11)= 0 !0g_9/2 (10)--- (50)
       ncore = noc_p
       if(xind=='neut') ncore = noc_n !the number of the occupied states
-
+      !---
       m = 0
       do 102 l = 0, lmax
 !!         if((xind.ne.'prot') .and. (l.ge.2)) goto 102 !filter_1
@@ -164,21 +166,17 @@ contains
          do 101 j = 2*l - 1, 2*l + 1, 2
 !!            if(j/=3) goto 101 !filter_2
             if (j<0) go to 101
-
             emax = ecut ; emin = -abs(vsp_ws_0(0,1,tol))
             call numerov_for(inode, l, j, ecut, psi00, xind) !determine nodemax from E_cut
             nodemax = inode - 1
-
             do 100 node00 = 0, nodemax
                if (node00>ndmax) go to 100
-               do ic = 0, ncore !--- remove SP-states which have the same quantum-number of core
+               do ic = 0, ncore !--- Pauli rule to remove SP states with the same quantum-number in the core
                   if (l==llc(ic) .and. j==jjc(ic) .and. node00==nodec(ic)) go to 100
                end do
-!--- formula : log_(2)(x) = log_(10)(x) / log_(10)(2)
-               xkmax = log10(abs(emax-emin)/tol)/log10(2.d0) + 0.5d0
+               xkmax = log10(abs(emax-emin)/tol)/log10(2.d0) + 0.5d0!--- formula : log_(2)(x) = log_(10)(x) / log_(10)(2)
                nxkmax = int(xkmax)
-!--- iteration to approximate `E' by both-side-attack
-               do k = 1, nxkmax
+               do k = 1, nxkmax!--- iteration to approximate `E' by both-side-attack
                   e = (emin + emax)*0.5d0
                   call numerov_for(inode,l,j,e,psi00,xind)
                   if (inode>node00) then
@@ -191,7 +189,7 @@ contains
                if (m>nspmax) then
                   write (6, *) 'Increase ``nspmax'' (~_~)' ; stop
                end if
-!--- matching at large distance for bound state
+               !--- matching with U(r) from large distance for bound state.
                if((e-vsp_ws_0(l,j,rmaxd))<0.d0) call numerov_mat(l,j,e,psi00,xind)
                esp0(m) = e ; ll0(m) = l ; jj0(m) = j ; node0(m) = node00
                do ir = 0, nrmax
@@ -201,7 +199,6 @@ contains
 100         end do
 101      end do
 102   end do
-
       nsp0 = m
       call sort_np(nsp0, ll0, jj0, node0, esp0, psi0)
       return
@@ -221,18 +218,12 @@ contains
       double precision :: r, r0, r1, fac, psi0, psi1, dd, cc, cin, rmaxd
       psi00 = 0.d0
       rmaxd = rmax ; nrmaxd = nrmax
-!!      IF((xind.ne.'prot')) tHEN
-!!          rmaxd = rmax - 40.d0
-!!          nrmaxd = int(rmaxd/dr+tol)
-!!      END if
-
       inode = 0
       fac = dr*dr*(2.d0*xmu_cn/hbarc/hbarc)
       if(xind=='prot') then
           fac = dr*dr*(2.d0*xmu_cp/hbarc/hbarc)
           goto 200
       end if
-
 !--- for core-n
  100  psi0 = dr**(l+1)
       psi1 = (2.d0+fac*(v_cn(l,j,dr)-e)*5.d0/6.d0)*psi0
@@ -240,28 +231,23 @@ contains
       psi00(0) = 0.d0
       psi00(1) = psi0
       psi00(2) = psi1
-
       do ir = 3, nrmaxd
          r = dr*dble(ir)
          r0 = dr*dble(ir-2)
          r1 = dr*dble(ir-1)
-
+         !---
          dd = psi0 - 2.d0*psi1
          dd = dd - fac*(v_cn(l,j,r0)-e)*psi0/12.d0
          dd = dd - fac*(v_cn(l,j,r1)-e)*psi1*5.d0/6.d0
-
+         !---
          cc = -fac*(v_cn(l,j,r)-e)/12.d0 + 1.d0
          cin = 1.d0/cc
-
          psi00(ir) = -cin*dd
-
          if (ir>5 .and. psi00(ir)*psi00(ir-1)<0.d0) inode = inode + 1
-
          psi0 = psi1
          psi1 = psi00(ir)
       end do
       goto 300
-
 !--- for core-p
  200  psi0 = dr**(l+1)
       psi1 = (2.d0+fac*(v_cp(l,j,dr)-e)*5.d0/6.d0)*psi0
@@ -283,7 +269,6 @@ contains
          psi0 = psi1
          psi1 = psi00(ir)
       end do
-
 !--- normalization
  300  fac = 0.d0
       do ir = 0, nrmax
@@ -292,7 +277,6 @@ contains
       psi00 = psi00/sqrt(fac)
       return
    end subroutine numerov_for
-
 !**************************************************************
    subroutine numerov_mat(l, j, e, psi00, xind)! Solve the Schroedinger eq. backward in order to ensure the asymptotic form for E < 0.
       use mdl_001_setting, only : rmax,nrmax,dr,ecut,hbarc,xmu_cp,xmu_cn,tol,lmax,ndmax,ac
@@ -309,23 +293,21 @@ contains
       rmaxd = rmax ; nrmaxd = nrmax
       rmatch = 1.5d0*ac**(1.d0/3.d0) !!0.5d0*rmaxd
       irmatch = int(rmatch/dr+tol)
-
       fac = dr*dr*(2.d0*xmu_cn/hbarc/hbarc)
       if(xind=='prot') then
           fac = dr*dr*(2.d0*xmu_cp/hbarc/hbarc)
           goto 200
       end if
-
 !--- For core-neutron
  100  evl = v_cn(l, j, rmaxd) - e
       ak = sqrt(abs(evl)*2.d0*xmu_cn/hbarc/hbarc)
       psi0 = exp(-ak*dble(nrmaxd)*dr)
       psi1 = exp(-ak*dble(nrmaxd-1)*dr)
-
+      !---
       psid(0) = 0.d0
       psid(nrmaxd) = psi0
       psid(nrmaxd-1) = psi1
-
+      !---
       do ir = nrmaxd - 2, irmatch, -1
          r = dr*dble(ir)
          r0 = dr*dble(ir+2)
@@ -345,17 +327,16 @@ contains
          psi00(ir) = psid(ir)*cmatch
       end do
       goto 300
-
-      !--- For core-proton
+!--- For core-proton
  200  evl = v_cp(l, j, rmaxd) - e
       ak = sqrt(abs(evl)*2.d0*xmu_cp/hbarc/hbarc)
       psi0 = exp(-ak*dble(nrmaxd)*dr)
       psi1 = exp(-ak*dble(nrmaxd-1)*dr)
-
+      !---
       psid(0) = 0.d0
       psid(nrmaxd) = psi0
       psid(nrmaxd-1) = psi1
-
+      !---
       do ir = nrmaxd - 2, irmatch, -1
          r = dr*dble(ir)
          r0 = dr*dble(ir+2)
@@ -374,7 +355,6 @@ contains
       do ir = irmatch, nrmaxd
          psi00(ir) = psid(ir)*cmatch
       end do
-
 !--- normalization
  300  fac = 0.d0
       do ir = 0, nrmax
@@ -383,7 +363,6 @@ contains
       psi00 = psi00/sqrt(fac)
       return
    end subroutine numerov_mat
-
 !**************************************************************
    subroutine sort_np(nsp0, ll0, jj0, node0, esp0, psi0)! A routine to sort the eigenvalues obtained in "spbsis" and the associated eigen functions.
       use mdl_001_setting
@@ -392,34 +371,32 @@ contains
       double precision, intent (inout) :: esp0(nspmax), psi0(nspmax, 0:nrmax)
       integer :: i, kk, j, ir, ip
       double precision :: p
-
       do i = 1, nsp0 - 1
          kk = i
          p = esp0(i)
-
          do j = i + 1, nsp0
             if (esp0(j)<=p) then
                kk = j
                p = esp0(j)
             end if
          end do
-
+         !---
          if (kk/=i) then
             esp0(kk) = esp0(i)
             esp0(i) = p
-
+            !---
             ip = jj0(i)
             jj0(i) = jj0(kk)
             jj0(kk) = ip
-
+            !---
             ip = ll0(i)
             ll0(i) = ll0(kk)
             ll0(kk) = ip
-
+            !---
             ip = node0(i)
             node0(i) = node0(kk)
             node0(kk) = ip
-
+            !---
             do ir = 0, nrmax
                p = psi0(i, ir)
                psi0(i, ir) = psi0(kk, ir)
@@ -429,8 +406,7 @@ contains
       end do
       return
    end subroutine sort_np
-
-   !*****************************************************************
+!*****************************************************************
    subroutine spbasis_p(xind, nsp, ll, jj, node, esp, psi)
       use mdl_001_setting, only: nspmax, nrmax
       implicit none
@@ -455,7 +431,7 @@ contains
          psi = psid
       end if
    end subroutine spbasis_p
-   !*****************************************************************
+!*****************************************************************
    subroutine spbasis_n(xind, nsp, ll, jj, node, esp, psi)
       use mdl_001_setting, only: nspmax, nrmax
       implicit none
@@ -480,8 +456,10 @@ contains
          psi = psid
       end if
    end subroutine spbasis_n
-
+!*****************************************************************
 end module mdl_007_solvers
+!///////////////////////////////////////////////////////////////////////////////
+!///////////////////////////////////////////////////////////////////////////////
 !///////////////////////////////////////////////////////////////////////////////
 !///////////////////////////////////////////////////////////////////////////////
 module mdl_008_elem
@@ -499,15 +477,15 @@ contains
       return
    end function c3j
 !**************************************************************
-  function ang_ele(lf,jf,li,ji, ilam) result (ff)
-    integer, intent(INOUT) :: lf,jf,li,ji, ilam
-    integer :: iphase
-    double precision :: ff, sr
-                            sr = 0.5d0*dble(1 + (-1)**(li+lf+ilam))
-    iphase = int(0.5d0*dble(jf-1) + 0.000001d0)
-    ff = c3j(jf, -1, ilam*2,0, ji, 1)*phass(iphase)*sr
-  end function
-   !****************************************************************
+   function ang_ele(lf,jf,li,ji, ilam) result (ff)
+      integer, intent(INOUT) :: lf,jf,li,ji, ilam
+      integer :: iphase
+      double precision :: ff, sr
+      sr = 0.5d0*dble(1 + (-1)**(li+lf+ilam))
+      iphase = int(0.5d0*dble(jf-1) + 0.000001d0)
+      ff = c3j(jf, -1, ilam*2,0, ji, 1)*phass(iphase)*sr
+   end function
+!****************************************************************
    !Angular part of double-bar M.E. of magnetic transition,
    !<lf, jf/2 || M(lam) || li,ji>, given in Eq.(B.82) in R&S textbook.
    !This result is multiplied by sqrt(4\pi /(2*lam+1)).
@@ -772,8 +750,9 @@ contains
    end function delr
    !--------------------------------------
 !****************************************************************
-
- end module mdl_008_elem
+end module mdl_008_elem
+!///////////////////////////////////////////////////////////////////////////////
+!///////////////////////////////////////////////////////////////////////////////
 !///////////////////////////////////////////////////////////////////////////////
 !///////////////////////////////////////////////////////////////////////////////
 module mdl_099_summary
@@ -796,9 +775,6 @@ contains
    integer :: i,j1,j2,l1,l2,m,n1,n2,ir
    integer :: k1,k2,k3,k4!--- Labels of initial and final states of interest
    double precision :: x,y,p,r, qp,qn, vp,vn
-   !!double precision, dimension (:), allocatable :: eall
-   !!double precision, dimension (:,:), allocatable :: h_all, h_rec, h_vnp, veigs
-   !!complex (kind=kind(0d0)) :: cdpn
    integer :: ni,li,ji,nf,lf,jf,nem,ilam
    double precision :: gl_p, gl_n, gs_p, gs_n, x1
    namelist/mine/ni,li,ji,nf,lf,jf,nem,ilam
@@ -860,7 +836,6 @@ contains
    write (711, '(4(2X,I3),F15.7)') nsp2, node2(nsp2), ll2(nsp2), jj2(nsp2), esp_n(nsp2)
    write (711, *) 'number of s.p.basis=', nsp2
    write (711, *) ''
-
 
    !--- find the initial & final states of interest
    k1 = -10; k2 = -10
@@ -956,7 +931,6 @@ contains
    implicit none
    integer :: i,m
    double precision :: vp,vn,qp,qn,v,w,sr,p,r,ff1
-
    integer :: ni,li,ji,nf,lf,jf,nem,ilam
    double precision :: gl_p, gl_n, gs_p, gs_n
    namelist/mine/ni,li,ji,nf,lf,jf,nem,ilam
@@ -1005,7 +979,6 @@ contains
    504 format("-->                                         ",X,F13.6,X,"(neutron)")
    write (711, 503) v/ff1
    write (711, 504) w/ff1
-
    !--- result-2
    write (711, *) ""
    write (711, *) "<><<><><><><<><><><><<><><><><<><><><><<><><><><<><><><><<><><>"
@@ -1024,7 +997,6 @@ contains
       qp = p*( gl_p*dbmmag_l_RS(jf,lf, ilam, ji,li) +gs_p*dbmmag_s_RS(jf,lf, ilam, ji,li) )
       qn = p*( gl_n*dbmmag_l_RS(jf,lf, ilam, ji,li) +gs_n*dbmmag_s_RS(jf,lf, ilam, ji,li) )
    end if
-
    !--- radial integration
    r = 1.2d0*ac**(1.d0/3.d0)
    if (nem.eq.8) then!--- electric modes.
