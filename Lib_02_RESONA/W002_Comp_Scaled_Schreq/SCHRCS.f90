@@ -1,4 +1,3 @@
-!///////////////////////////////////////////////////////////////////////////////
 module mdl_003_energies
    double precision, parameter :: pi = 3.141592653d0
    double precision, parameter :: theta = (pi*0.5d0)*0.123d0 !comple--scaling angle

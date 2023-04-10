@@ -287,11 +287,6 @@ contains
 !****************************************************************
 end module mdl_002_routines
 !///////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
 !///////////////////////////////////////////////////////////////////////////////
 Module mdl_006_cwf!Mod_cwf
    Public :: Dfcoul
@@ -1587,20 +1582,14 @@ Contains
 620   Return
    End Subroutine Jfdelg
 !======================================================================!
-
 End Module mdl_006_cwf
-
-
-
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 module mdl_003_subroutines
-
    use mdl_001_setting, only: ac, r00, a00
-
 !--- Minnesota parameters:
    double precision, dimension(3) :: vnn = (/200.d0, -91.85d0, -178.d0/) !MeV
    double precision, dimension(3) :: bv = (/1.487d0, 0.465d0, 0.639d0/) !fm^(-2)
-
 !--- parameters of the core-n (-p) WS(+Coulomb) potential.
    double precision, parameter :: W_0  = -53.2d0 ![MeV]
    double precision, parameter :: W_ls =  22.1d0 ![MeV*fm^2]
@@ -1625,8 +1614,6 @@ contains
       ff = vnn(1)*exp(-bv(1)*r*r) + vnn(3)*exp(-bv(3)*r*r)
       return
    end function
-
-
 !***********************************************************
    function vcn_ws_0(l, j, r) result (ff)
       implicit none
@@ -1636,8 +1623,7 @@ contains
       r0 = rc0 ; a0 = ac0
       v0_l0 = W_0
       v0_lq = W_0
-
-!--- Woods-Saxon
+      !--- Woods-Saxon
       v0 = v0_l0
       if (l.ne.0) v0 = v0_lq
       ff = v0/(1.d0+exp((r-r0)/a0))
@@ -1650,21 +1636,17 @@ contains
       double precision, intent (in) :: r
       double precision :: xls, yl, yj, vls, vls_l0, vls_lq, df, rd, bd, ff
       rd = rc0 ; bd = ac0
-
       vls_l0 = W_ls*0.d0
       vls_lq = W_ls
-
       vls = vls_l0
       if (l.ne.0) vls = vls_lq
       yl = dble(l) ; yj = dble(j)/2.d0
-!--- Woods-Saxon
+      !--- Woods-Saxon
       df = -exp((r-rd)/bd)/(1.d0+exp((r-rd)/bd))**2/bd
       xls = 0.5d0*(yj*(yj+1.d0)-yl*(yl+1.d0)-0.75d0)
       ff = vls*xls*df/r
       return
    end function vcn_ws_ls
-
-
 !***********************************************************
    function vcn_cent(l, r) result (ff) ! potential between the Core and a nucleon
       use mdl_001_setting, only: hbarc, xmu
@@ -1672,11 +1654,10 @@ contains
       integer, intent (in) :: l
       double precision, intent (in) :: r
       double precision :: ff
-!--- centrifugal
+      !--- centrifugal
       ff = dble(l*(l+1))*0.5d0*hbarc*hbarc/xmu/r/r
       return
    end function vcn_cent
-
 !***********************************************************
    function vcn_coul(r) result (ff) ! potential between the Core and a nucleon
       use mdl_001_setting, only: hbarc, alpha, zc
@@ -1684,7 +1665,7 @@ contains
       double precision, intent (in) :: r
       double precision :: vcoul, rb, ff
       rb = rc0
-!--- Coulomb (only for a proton)
+      !--- Coulomb (only for a proton)
       if (r<rb) then
          vcoul = zc*hbarc*alpha*(3.d0-(r/rb)**2)*0.5d0/rb
       else
@@ -1693,8 +1674,6 @@ contains
       ff = vcoul*g_coul !for C-p
       return
    end function vcn_coul
-
-
 !***********************************************************
    function vc_prot(l, j, r) result (ff) ! potential between the Core and a proton
       implicit none
@@ -1714,8 +1693,6 @@ contains
       ff = vcn_ws_0(l, j, r) + vcn_ws_ls(l, j, r) + vcn_cent(l, r) !WS
 !!      ff = V2b(r) + vcn_cent(l,r) !V2b_any
    end function
-
-
 !***********************************************************
    function V2b(r)
       implicit none
@@ -1725,8 +1702,6 @@ contains
 !!      V2b = vmin_u1_S0(r)
       V2b = vc_neut(2, 3, r) -vcn_cent(2, r)
    end function V2b
-
-
 !***********************************************************
    function vcx(xind,l,j,r) result (ff) ! potential between the Core and X = p or n.
       implicit none
@@ -1738,8 +1713,6 @@ contains
       IF(xind=='prot') ff = vc_prot(l,j,r)
       IF(r .Lt. 0.0000001) ff = 7.77d9
    end function
-
-
 !***********************************************************
    function vcx_cnf(xind, l, j, r) result (ff) ! Coffin-potential between the Core and a Nucleon
       implicit none
@@ -1755,8 +1728,6 @@ contains
       end if
       return
    end function vcx_cnf
-
-
 !**************************************************************
    subroutine coulscat(xind, l, j, ein, zs, zf)
 ! subroutine for integration of the schroedinger eq. by
@@ -1916,10 +1887,7 @@ contains
             hsp3(i2, i1) = hsp3(i2, i1) + sum
 100      end do
       end do
-
    end subroutine hsp_cnf
-
-
 
 !**************************************************************
    subroutine sort(nsp0, ll0, jj0, node0, esp0, psi0)
