@@ -14,18 +14,19 @@ module mdl_001_setting
    double precision, parameter :: zc =  20.d0 ! proton-number of core
    double precision, parameter :: nc =  20.d0 !neutron-number of core
    double precision, parameter :: ac = zc + nc
-   double precision, parameter :: anmass_p =  938.2720813d0 ! proton-mass
+   double precision, parameter :: anmass_p =  510998.995d0 !938.2720813d0 ! proton-mass
    double precision, parameter :: anmass_n =  939.5654133d0 !neutron-mass
 !!   double precision, parameter :: BE_core = 7.976207d0*ac !MeV, BE for O-16 nucleus.
    double precision, parameter :: BE_core = 8.551305d0*ac !MeV, BE for Ca-40 nucleus.
 !!   double precision, parameter :: BE_core = 8.253d0*ac !MeV, BE for Sn-100 nucleus.
    double precision, parameter :: mass_c = zc*anmass_p + nc*anmass_n - BE_core !MeV, for the core.
-   double precision, parameter :: xmu_cp = anmass_p*mass_c/(anmass_p + mass_c)
+!<>   double precision, parameter :: xmu_cp = anmass_p*mass_c/(anmass_p + mass_c)
+   double precision, parameter :: xmu_cp = anmass_p
    double precision, parameter :: xmu_cn = anmass_n*mass_c/(anmass_n + mass_c)
    !---
-   double precision, parameter :: ecut = 18.d0 !MeV
-   double precision, parameter :: RMAX = 30.d0 !120.d0
-   double precision, parameter :: dr = 0.1d0
+   double precision, parameter :: ecut = tol !MeV
+   double precision, parameter :: RMAX = 4.d0 !120.d0
+   double precision, parameter :: dr = 0.001d0
    integer, parameter :: nrmax = int(rmax/dr + 1.d-6) !max # of r-grid
    integer, parameter :: lmax = 5 !15 !max # of spatial ang-momenta
    integer, parameter :: jmax = 2*lmax+1
@@ -56,11 +57,11 @@ contains
       integer, intent (in) :: l, j
       double precision, intent (in) :: r
       double precision :: ff
-      ff = vsp_ws_0(l, j, r) + vsp_ws_ls(l, j, r) + vsp_cent_p(l, r) + vsp_coul(r)
+!<>      ff = vsp_ws_0(l, j, r) + vsp_ws_ls(l, j, r) + vsp_cent_p(l, r) + vsp_coul(r)
+      ff = vatom(r) + vsp_cent_p(l, r)
    end function v_cp
    !***********************************************************
    function vsp_ws_0(l, j, r) result (ff) !Woods-Saxon potential between the Core and a nucleon
-      implicit none
       integer, intent (in) :: l, j
       double precision, intent (in) :: r
       double precision :: rc, ac, ff
@@ -118,7 +119,7 @@ contains
       use mdl_001_setting, only: hbarc, alpha; implicit none
       double precision, intent (in) :: r
       double precision :: ff, zz, rb, vcoul
-      zz = 1.d0; rb = 1.d-9
+      zz = 2.d0; rb = 1.d-9
       if (r<rb) then
          vcoul = -zz*hbarc*alpha*(3.d0-(r/rb)**2)*0.5d0/rb
       else
@@ -1071,7 +1072,7 @@ end module mdl_099_summary
          call cpu_time( c1 )
          call system_clock(it1)
          call SPEM
-         call Weisskopf
+!<>         call Weisskopf
          call system_clock(it2, it_rate, it_max)
          if ( it2 < it1 ) then
            idiff = (it_max - it1) + it2 + 1
