@@ -24,7 +24,7 @@ module mdl_001_setting
    double precision, parameter :: xmu_cp = anmass_p
    double precision, parameter :: xmu_cn = anmass_n*mass_c/(anmass_n + mass_c)
    !---
-   double precision, parameter :: ecut = tol !MeV
+   double precision, parameter :: ecut = -tol !MeV
    double precision, parameter :: RMAX = 4.d0 !120.d0
    double precision, parameter :: dr = 0.001d0
    integer, parameter :: nrmax = int(rmax/dr + 1.d-6) !max # of r-grid
@@ -119,7 +119,7 @@ contains
       use mdl_001_setting, only: hbarc, alpha; implicit none
       double precision, intent (in) :: r
       double precision :: ff, zz, rb, vcoul
-      zz = 2.d0; rb = 1.d-9
+      zz = 1.d0; rb = 1.d-9
       if (r<rb) then
          vcoul = -zz*hbarc*alpha*(3.d0-(r/rb)**2)*0.5d0/rb
       else
