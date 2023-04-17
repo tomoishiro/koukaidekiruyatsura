@@ -1,0 +1,29 @@
+
+
+grep   -r   lapack  ./Desktop/*
+
+find  ./  -name  "*.f90"   -type  f   -print  |  xargs  grep  lapack
+
+
+tar  -zcvf   xxxx.tar.gz   directory
+tar  -zxvf   xxxx.tar.gz
+zip  -r      xxxx.zip      directory
+unzip        xxxx.zip
+
+scp  CPNM1.f90   toishi@andromeda.phy.hr:./TEMPO/
+scp   2023_0212_ALL_PRESENTATIONS_OISHI.*    tomohiro.oishi@mercury.yukawa.kyoto-u.ac.jp:./public_html/
+
+dos2unix RUN_*
+sbatch RUN_*
+squeue  |  grep  "tomohiro"
+
+
+ssh-agent
+ssh-add  ~/.ssh/id_ed25519
+(PIN)
+ssh  -A  tomohiro.oishi@mercury.yukawa.kyoto-u.ac.jp
+ssh  front
+
+
+ssh toishi@andromeda.phy.hr > GT calculations.
+
