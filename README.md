@@ -16,7 +16,12 @@ This is my personal library for numerical calculations in nuclear physics.
 - RESONA
 
 <Basic commands>
+  git config --global  user.name tomoishiro
+  git config --global  user.email  f2v2hcdr@gmail.com
+  git config --list
+------
   git pull
+------
   git add test.txt (=filename)
   git commit -m "XXXXX"
   git push -u origin main
