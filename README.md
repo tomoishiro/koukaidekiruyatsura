@@ -1,5 +1,4 @@
 #MEMO
-
 <2023.06.17>
 I did
  git clone https://github.com/tomoishiro/koukaidekiruyatsura
@@ -15,3 +14,13 @@ Several *.f90, *.gnu (GNUPLOT-script), and *.sh (BASH-script) files.
 This is my personal library for numerical calculations in nuclear physics.
 - TOSPEM
 - RESONA
+
+<Basic commands>
+  git pull
+  git add test.txt (=filename)
+  git commit -m "XXXXX"
+  git push -u origin main
+Note: Before pushing, you need to register the repository.
+If you did "clone", that was automatically registered.
+Here "origin" means the registered name.
+Here "main" means its branch.
