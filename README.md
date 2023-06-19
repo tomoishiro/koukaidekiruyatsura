@@ -17,7 +17,7 @@ This is my personal library for numerical calculations in nuclear physics.
 
 <Basic commands>
   git config --global  user.name tomoishiro
-  git config --global  user.email  f2v2hcdr@gmail.com
+  git config --global  user.email  f******r@gmail.com
   git config --list
 ------
   git pull
